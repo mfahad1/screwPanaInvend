@@ -1,5 +1,5 @@
 import {Component} from '@angular/core';
-import {NavParams, Platform} from "ionic-angular";
+import {NavParams, Platform, AlertController} from "ionic-angular";
 
 declare var google;
 declare var firebase;
@@ -14,20 +14,24 @@ export class Report {
     platform:any;
     map:any;
     database = firebase.database();
+    showAlert  = false;
     constructor(
         private navParams: NavParams,
         platform: Platform,
+        private alertCtrl:AlertController,
     ) {
         this.platform = platform;
         this.data = this.navParams.get('data');
-        this.keysData = Object.keys(this.data,)
+        this.keysData = Object.keys(this.data)
         console.log("get data",this.keysData,this.navParams.get('lat'),this.navParams.get('lng'));
 
 
-
-        var starCountRef = firebase.database().ref('users/');
+        let that = this;
+        let starCountRef = firebase.database().ref('approve/');
         starCountRef.on('value', function(snapshot) {
-            alert(snapshot);
+            console.log("Your mechanic is on the way",snapshot.val());
+            if(snapshot.val())
+                that.showOkDialog1("ALert!!","Your mechanic is on the way");
         });
 
 
@@ -55,7 +59,8 @@ export class Report {
             this.map = new google.maps.Map(document.getElementById('map_canvas3'), {
                 zoom: minZoomLevel,
                 center: new google.maps.LatLng(pos.coords.latitude ,pos.coords.longitude),
-                mapTypeId: google.maps.MapTypeId.ROADMAP
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                draggable: false
             });
 
             let position = new google.maps.LatLng(pos.coords.latitude ,pos.coords.longitude);
@@ -80,9 +85,58 @@ export class Report {
 
     hitNotification() {
         firebase.database().ref('users/').set({
-            dummy:"here heree222"
+            data:this.navParams.get('data'),
+            userDetail:{
+                "userName":"Taha Azhar",
+                "Car":"Toyota Corolla",
+                "Model":"2007",
+                "Contact Info":"Email@gmail.com",
+                "Cell":"0322-2200004"
+            }
+        });
+        let that = this;
+        this.showOkDialog('Alert !!',"your request has been submitted to nearest mechanic you will get notified soon",
+            ()=>{
+                console.log("OK");
+                that.showAlert = true;
+            });
+    }
+
+
+    showOkDialog(title: string, message: string, okHandler?) {
+        let alert = this.alertCtrl.create({
+            title: title,
+            subTitle: message,
+            buttons: [
+                {
+                    text: 'OK',
+                    handler: () => {
+                        okHandler();
+                    }
+                }
+
+            ]
         });
 
-        alert("your request has been submitted to nearest mechanic you will get notified soon");
+
+
+        alert.present();
     }
+
+
+    showOkDialog1(title: string, message: string) {
+        let alert = this.alertCtrl.create({
+            title: title,
+            subTitle: message,
+            buttons: [
+                {
+                    text: 'OK',
+
+                }
+
+            ]
+        });
+        alert.present();
+    }
+
 }
